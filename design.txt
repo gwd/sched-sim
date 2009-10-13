@@ -1,0 +1,29 @@
+Discrete event simulator to speed the development and analysis of
+different scheduling algorithms for the new scheduler.
+
+Inputs: Scheduler, Workload description
+
+Hmm... compile in all scheduler variants...?
+
+scheduler callbacks {
+  init processor,
+  init VM,
+  schedule,
+  wake,
+  block
+}
+
+scheduler interface {
+  insert event (perhaps just SCHEDULE event)
+}
+
+Workload description:
+  To begin, wake / block lists; all unconditional.
+  Later, deal with "dropped" work (e.g., video, audio)?
+  Dependencies (dom0, stubdoms, driver doms)?
+
+Types of event:
+* Wake
+* Block
+* Schedule timer
+

@@ -2,6 +2,7 @@
 #define __SIM_H
 
 #include "stats.h"
+#include "workload.h"
 
 enum runstate {
     RUNSTATE_RUNNING,
@@ -55,15 +56,25 @@ struct scheduler {
     struct sched_ops ops;
 };
 
-#define MAX_PCPU
+#define MAX_PCPU 16
 struct global_pcpu_data {
-    int count;
+    int count, idle;
     struct pcpu {
         int pid;
+        int idle; /* Indicates may be woken up if work appears */
         struct vm* current;
     } pcpus[MAX_PCPU];
 };
 extern struct global_pcpu_data P;
+
+
+#ifdef VM_DATA_PUBLIC
+struct global_vm_data {
+    int count;
+    struct vm vms[MAX_VMS];
+};
+extern struct global_vm_data V;
+#endif
 
 struct vm* vm_from_vid(int vid);
 #define current(_pid) (P.pcpus[(_pid)].current)

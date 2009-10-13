@@ -9,7 +9,7 @@
 
 
 #define MAX_VMS 16
-#define TSLICE 2000
+#define TSLICE 1000
 
 struct sched_vm {
     struct list_head queue;
@@ -62,6 +62,19 @@ void sched_rr_wake(int time, struct vm * v)
     ASSERT(list_empty(&svm->queue));
 
     list_add_tail(&svm->queue, &sched_priv.queue);
+
+    /* Never preempt on wake; only kick idle processors */
+    if ( P.idle > 0 )
+    {
+        int i;
+
+        for ( i=0; i<P.count; i++ )
+            if ( P.pcpus[i].idle )
+                break;
+
+        printf(" %s: waking p%d\n", __func__, i);
+        sim_sched_timer(0, i);
+    }
 }
 
 struct vm* sched_rr_schedule(int time, int pid)

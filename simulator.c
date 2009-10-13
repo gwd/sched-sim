@@ -46,10 +46,13 @@ struct {
 } sim;
 
 
-struct {
+#ifndef VM_DATA_PUBLIC
+struct global_vm_data {
     int count;
     struct vm vms[MAX_VMS];
-} V;
+};
+#endif
+struct global_vm_data V;
 
 extern struct scheduler sched_rr;
 int default_scheduler = 0;
@@ -66,7 +69,7 @@ struct {
     const struct scheduler * scheduler;
 } opt = {
     .time_limit = 100000,
-    .pcpu_count = 1,
+    .pcpu_count = 2,
     .workload = NULL,
 };
 
@@ -110,12 +113,12 @@ void sim_insert_event(int time, int type, int param, int reset)
     if ( !evt )
         evt = (struct event *)malloc(sizeof(*evt));
 
-    printf(" [insert t%d %s param%d]\n",
-           evt->time, event_name[evt->type], evt->param);
-
     evt->time = time;
     evt->type = type;
     evt->param = param;
+
+    printf(" [insert t%d %s param%d]\n",
+           evt->time, event_name[evt->type], evt->param);
 
     INIT_LIST_HEAD(&evt->event_list);
 
@@ -161,7 +164,12 @@ void vm_next_event(struct vm *v)
 
 struct vm* vm_from_vid(int vid)
 {
-    ASSERT(vid < V.count);
+    if ( vid >= V.count )
+    {
+        fprintf(stderr, "%s: v%d >= V.count %d!\n",
+                __func__, vid, V.count);
+        exit(1);
+    }
 
     return V.vms + vid;
 }
@@ -232,6 +240,18 @@ void vm_preempt(int now, struct vm *v)
 /* Callbacks the scheduler may make */
 void sim_sched_timer(int time, int pid)
 {
+    if ( pid >= P.count )
+    {
+        fprintf(stderr, "%s: p%d >= P.count %d\n",
+                __func__, pid, P.count);
+        exit(1);
+    }
+
+    if ( P.pcpus[pid].idle )
+    {
+        P.pcpus[pid].idle = 0;
+        P.idle--;
+    }
     sim_insert_event(sim.now + time, EVT_TIMER, pid, 1);
 }
 
@@ -363,9 +383,21 @@ void simulate(void)
                     sim_runstate_change(sim.now, prev, RUNSTATE_RUNNABLE);
             }
 
-            sim_runstate_change(sim.now, next, RUNSTATE_RUNNING);
+            
             P.pcpus[pid].current = next;
-            next->processor = pid;
+            if ( next )
+            {
+                if ( next != prev )
+                {
+                    sim_runstate_change(sim.now, next, RUNSTATE_RUNNING);
+                    next->processor = pid;
+                }
+            }
+            else
+            {
+                P.pcpus[pid].idle = 1;
+                P.idle++;
+            }
         }
         break;
         default:
@@ -389,9 +421,12 @@ void init(void)
 
     /* Initialize pcpus */
     P.count = opt.pcpu_count;
+    P.idle = 0;
     for ( i=0; i<P.count; i++ )
     {
         P.pcpus[i].pid = i;
+        P.pcpus[i].idle = 1;
+        P.idle++;
         P.pcpus[i].current = NULL;
     }
 
@@ -400,6 +435,7 @@ void init(void)
 
     /* Initialize vms */
     w=opt.workload;
+    V.count = 0;
     for ( vid=0; vid<w->vm_count; vid++)
     {
         struct vm *v = V.vms+vid;
@@ -447,10 +483,6 @@ void init(void)
             break;
         }
     }
-
-    /* Insert initial scheduler timer */
-    for ( i=0; i<P.count; i++)
-        sim_insert_event(sim.now, EVT_TIMER, i, 1);
 }
 
 void report(void)

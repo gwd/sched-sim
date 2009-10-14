@@ -3,6 +3,7 @@
 
 #include "stats.h"
 #include "workload.h"
+#include "sched.h"
 
 enum runstate {
     RUNSTATE_RUNNING,
@@ -42,18 +43,6 @@ struct vm
     const struct sim_phase *e; /* Shortcut pointer to workload->list[phase_index] */
     const struct vm_workload *workload;
 
-};
-
-struct sched_ops {
-    void (*sched_init)(void);
-    void (*vm_init)(int vid);
-    void (*wake)(int time, struct vm* v);
-    struct vm* (*schedule)(int time, int pid);
-};
-
-struct scheduler {
-    char *name;
-    struct sched_ops ops;
 };
 
 #define MAX_PCPU 16

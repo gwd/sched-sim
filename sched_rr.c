@@ -50,9 +50,12 @@ void sched_rr_vm_init(int vid)
     
 }
 
-void sched_rr_wake(int time, struct vm * v)
+void sched_rr_wake(int time, int vid)
 {
+    struct vm *v;
     struct sched_vm *svm;
+
+    v = vm_from_vid(vid);
 
     printf("%s: time %d vid %d\n",
            __func__, time, v->vid);

@@ -10,7 +10,7 @@ CFLAGS  += -Werror
 
 BIN      = simulator
 
-HDRS = list.h workload.h sim.h stats.h
+HDRS = list.h workload.h sim.h stats.h options.h
 
 all: $(BIN)
 
@@ -21,5 +21,5 @@ clean:
 %.o: %.c $(HDRS) Makefile
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-simulator: simulator.o workloads.o sched_rr.o stats.o
+simulator: simulator.o workloads.o sched_rr.o stats.o options.o
 	$(CC) $(CFLAGS) -o $@ $^

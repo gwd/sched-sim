@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "workload.h"
 
 const int default_workload = 0;
@@ -87,4 +88,6 @@ struct workload builtin_workloads[] =
             },
         }
     },
+    { .name=NULL }
+        
 };

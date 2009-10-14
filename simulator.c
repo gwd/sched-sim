@@ -8,6 +8,8 @@
 #include "list.h"
 #include "sim.h"
 #include "workload.h"
+#include "sched.h"
+#include "options.h"
 
 FILE *warn;
 
@@ -59,19 +61,10 @@ int default_scheduler = 0;
 struct scheduler *schedulers[] =
 {
     &sched_rr,
+    NULL
 };
 
 /* Options */
-struct {
-    int time_limit;
-    int pcpu_count;
-    const struct workload * workload;
-    const struct scheduler * scheduler;
-} opt = {
-    .time_limit = 100000,
-    .pcpu_count = 2,
-    .workload = NULL,
-};
 
 struct global_pcpu_data P;
 
@@ -350,7 +343,7 @@ void simulate(void)
             struct vm *v = vm_from_vid(evt.param);
             ASSERT(v->processor == -1);
             sim_runstate_change(sim.now, v, RUNSTATE_RUNNABLE);
-            sim.sched_ops->wake(sim.now, v);
+            sim.sched_ops->wake(sim.now, v->vid);
         }
         break;
         case EVT_BLOCK:
@@ -507,12 +500,8 @@ int main(int argc, char * argv[])
 {
     warn = stdout;
 
-    /* Read opts, config file? */
-    if ( !opt.workload )
-        opt.workload = builtin_workloads+default_workload;
+    parse_options(argc, argv);
 
-    if ( !opt.scheduler )
-        opt.scheduler = schedulers[default_scheduler];
     /* Setup simulation */
     init();
     

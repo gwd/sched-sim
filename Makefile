@@ -21,5 +21,5 @@ clean:
 %.o: %.c $(HDRS) Makefile
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-simulator: simulator.o workloads.o sched_rr.o stats.o options.o
+simulator: simulator.o workloads.o sched_rr.o stats.o options.o sched_credit01.o
 	$(CC) $(CFLAGS) -o $@ $^

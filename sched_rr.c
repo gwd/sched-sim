@@ -123,6 +123,7 @@ struct vm* sched_rr_schedule(int time, int pid)
 struct scheduler sched_rr =
 {
     .name="round-robin",
+    .desc="Basic round-robin scheduler.",
     .ops = {
         .sched_init = sched_rr_init,
         .vm_init    = sched_rr_vm_init,

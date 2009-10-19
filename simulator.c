@@ -171,8 +171,8 @@ void vm_block(int now, struct vm *v)
 {
     ASSERT(v->e->type == PHASE_RUN);
     v->time_this_phase += now - v->state_start_time;
-    printf("%s: v%d time_this_phase %d\n",
-           __func__, v->vid, v->time_this_phase);
+    printf("%s: v%d time_this_phase %d (evt %d)\n",
+           __func__, v->vid, v->time_this_phase, v->e->time);
 
     ASSERT(v->time_this_phase == v->e->time);
 
@@ -205,7 +205,7 @@ void vm_wake(int now, struct vm *v)
 void vm_run(int now, struct vm *v)
 {
     ASSERT(v->e->type == PHASE_RUN);
-    ASSERT(v->time_this_phase < v->e->time);
+    ASSERT(v->time_this_phase <= v->e->time);
 
     sim_insert_event(now + v->e->time - v->time_this_phase, EVT_BLOCK, v->vid, 0);
     v->state_start_time = now;
@@ -217,14 +217,15 @@ void vm_preempt(int now, struct vm *v)
 {
     struct event* evt;
 
+    v->time_this_phase += now - v->state_start_time;
+    printf("%s: v%d time_this_phase %d (evt %d)\n",
+           __func__, v->vid, v->time_this_phase, v->e->time);
+
+    ASSERT( v->time_this_phase <= v->e->time );
+
+    /* Only remove block event if we still have more runtime left */
     if ( ( evt = sim_remove_event(EVT_BLOCK, v->vid) ) )
         free(evt);
-
-    v->time_this_phase += now - v->state_start_time;
-    printf("%s: v%d time_this_phase %d\n",
-           __func__, v->vid, v->time_this_phase);
-
-    ASSERT(v->time_this_phase < v->e->time);
 
     v->was_preempted = 1;
 }
@@ -233,6 +234,13 @@ void vm_preempt(int now, struct vm *v)
 /* Callbacks the scheduler may make */
 void sim_sched_timer(int time, int pid)
 {
+    if ( time < 0 )
+    {
+        fprintf(stderr, "%s: Time %d < 0!\n",
+                __func__, time);
+        abort();
+    }
+
     if ( pid >= P.count )
     {
         fprintf(stderr, "%s: p%d >= P.count %d\n",
@@ -386,8 +394,18 @@ void simulate(void)
                     next->processor = pid;
                 }
             }
-            else
+            else 
             {
+                if ( P.pcpus[pid].idle )
+                {
+                    fprintf(stderr, "Strange, pid %d already idle!\n",
+                            pid);
+                    abort();
+                }
+
+                /* If the pcpu is going idle, clear all timers from it */
+                sim_remove_event(EVT_TIMER, pid);
+
                 P.pcpus[pid].idle = 1;
                 P.idle++;
             }

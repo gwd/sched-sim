@@ -258,6 +258,14 @@ void sim_sched_timer(int time, int pid)
     sim_insert_event(sim.now + time, EVT_TIMER, pid, 1);
 }
 
+void dump_running(int now, struct vm *v)
+{
+    printf("runtime v%d %d %llu\n",
+           v->vid,
+           now,
+           v->stats.state[RUNSTATE_RUNNING].cycles);
+}
+
 void sim_runstate_change(int now, struct vm *v, int new_runstate)
 {
     int ostate, nstate;
@@ -287,6 +295,10 @@ void sim_runstate_change(int now, struct vm *v, int new_runstate)
     }
 
     update_cycles(&v->stats.state[ostate], stime);
+
+    if ( v->runstate == RUNSTATE_RUNNING
+         || new_runstate == RUNSTATE_RUNNING )
+        dump_running(now, v);
 
 
     if ( v->runstate == RUNSTATE_RUNNING

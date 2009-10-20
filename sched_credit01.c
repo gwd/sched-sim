@@ -40,7 +40,7 @@ struct {
 
 
 
-void reset_credit(int time)
+static void reset_credit(int time)
 {
     int i;
     for ( i=0; i<=sched_priv.max_vm; i++)
@@ -51,12 +51,12 @@ void reset_credit(int time)
     /* No need to resort runq, as everyone's credit is now zero */
 }
 
-void dump_credit(int time, struct sched_vm *svm)
+static void dump_credit(int time, struct sched_vm *svm)
 {
     printf("credit v%d %d %d\n", svm->vid, time, svm->credit);
 }
 
-void burn_credit(struct sched_vm *svm, int time)
+static void burn_credit(struct sched_vm *svm, int time)
 {
     ASSERT(time >= svm->start_time);
 
@@ -66,7 +66,7 @@ void burn_credit(struct sched_vm *svm, int time)
     dump_credit(time, svm);
 }
 
-int calc_timer(struct sched_vm *svm)
+static int calc_timer(struct sched_vm *svm)
 {
     int time = MAX_TIMER;
 
@@ -90,7 +90,7 @@ int calc_timer(struct sched_vm *svm)
     return time;
 }
 
-void runq_insert(struct sched_vm *svm)
+static void runq_insert(struct sched_vm *svm)
 {
     struct list_head *iter;
     int pos = 0;

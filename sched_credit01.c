@@ -164,17 +164,44 @@ static void sched_credit_wake(int time, int vid)
 
     runq_insert(svm);
 
-    /* Never preempt on wake; only kick idle processors */
-    if ( P.idle > 0 )
+    /* Scan for either:
+     * + an idle cpu to wake up, or
+     * + if there are cpus with lower credits, the lowest one
+     */
     {
-        int i;
+        int i, ipid=-1, lowest = svm->credit;
+        
 
         for ( i=0; i<P.count; i++ )
+        {
             if ( P.pcpus[i].idle )
+            {
+                printf(" %s: p%d idle, waking\n", __func__, i);
+                ipid=i;
                 break;
+            }
+            else if ( P.pcpus[i].current )
+            {
+                struct vm* ovm = P.pcpus[i].current;
+                int ovid = ovm->vid;
+                struct sched_vm *osvm = sched_priv.vms + ovid;
 
-        printf(" %s: waking p%d\n", __func__, i);
-        sim_sched_timer(0, i);
+                /* Update credits of currently running VM */
+                burn_credit(osvm, time);
+
+                if ( osvm->credit < lowest )
+                {
+                    ipid = i;
+                    lowest = osvm->credit;
+                }
+            }
+            
+        }
+
+        if ( ipid >= 0 )
+            sim_sched_timer(0, ipid);
+        else
+            dump_credit(time, svm);
     }
 }
 

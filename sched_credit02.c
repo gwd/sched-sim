@@ -12,7 +12,7 @@
 #define CREDIT_INIT  500
 #define CREDIT_RESET 0
 #define MAX_TIMER 200
-#define MIN_TIMER 100
+#define MIN_TIMER 50
 
 struct sched_vm {
     struct list_head runq_elem;
@@ -72,18 +72,17 @@ static int calc_timer(struct sched_vm *svm)
 
     if ( time > svm->credit )
         time = svm->credit;
-#if 0
+
     if ( !list_empty(&sched_priv.runq) )
     {
         struct sched_vm *sq = list_entry(sched_priv.runq.next, struct sched_vm, runq_elem);
 
         ASSERT(svm->credit >= sq->credit);
 
-        if ( (svm->credit - sq->credit) < time )
+        if ( time > (svm->credit - sq->credit) )
             time = (svm->credit - sq->credit);
     }
 
-#endif
 
     if ( time < MIN_TIMER )
         time = MIN_TIMER;
@@ -266,7 +265,7 @@ static struct vm* sched_credit_schedule(int time, int pid)
 struct scheduler sched_credit02 =
 {
     .name="credit02",
-    .desc="Zero-start, burn based on weight, reset to zero at negative credit",
+    .desc="Zero-start, burn based on weight, reset to zero at negative credit, with time-on-credit-equal",
     .ops = {
         .sched_init = sched_credit_init,
         .vm_init    = sched_credit_vm_init,

@@ -59,12 +59,14 @@ struct global_vm_data V;
 extern struct scheduler sched_rr;
 extern struct scheduler sched_credit01;
 extern struct scheduler sched_credit02;
+extern struct scheduler sched_credit03;
 int default_scheduler = 0;
 struct scheduler *schedulers[] =
 {
     &sched_rr,
     &sched_credit01,
     &sched_credit02,
+    &sched_credit03,
     NULL
 };
 

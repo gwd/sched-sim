@@ -48,7 +48,7 @@ struct workload builtin_workloads[] =
     },
     {
         .name="N2s2a1",
-        .vm_count=6,
+        .vm_count=5,
         .vm_workloads = {
             { .phase_count = 2, .list = {
                     { .type=PHASE_BLOCK, .time=20 },
@@ -63,16 +63,6 @@ struct workload builtin_workloads[] =
                     { .type=PHASE_BLOCK, .time=4 },  
                     { .type=PHASE_RUN, .time=87 },
                     { .type=PHASE_BLOCK, .time=30 },
-                } },
-            { .phase_count = 8, .list = {
-                    { .type=PHASE_RUN, .time=13 },
-                    { .type=PHASE_BLOCK, .time=10 },  
-                    { .type=PHASE_RUN, .time=17 },
-                    { .type=PHASE_BLOCK, .time=7 },  
-                    { .type=PHASE_RUN, .time=15 },
-                    { .type=PHASE_BLOCK, .time=5 },  
-                    { .type=PHASE_RUN, .time=30 },
-                    { .type=PHASE_BLOCK, .time=2 },
                 } },
             { .phase_count = 8, .list = {
                     { .type=PHASE_RUN, .time=66 },
@@ -95,11 +85,11 @@ struct workload builtin_workloads[] =
                 } },
             { .phase_count = 6, .list = {
                     { .type=PHASE_RUN, .time=850 },
-                    { .type=PHASE_BLOCK, .time=5 },  
-                    { .type=PHASE_RUN, .time=7 },
-                    { .type=PHASE_BLOCK, .time=5 },  
-                    { .type=PHASE_RUN, .time=9 },
-                    { .type=PHASE_BLOCK, .time=5 },  
+                    { .type=PHASE_BLOCK, .time=10 },  
+                    { .type=PHASE_RUN, .time=5 },
+                    { .type=PHASE_BLOCK, .time=17 },  
+                    { .type=PHASE_RUN, .time=17 },
+                    { .type=PHASE_BLOCK, .time=8 },  
                 } },
         }
     },

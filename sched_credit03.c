@@ -42,6 +42,21 @@ struct {
     int next_check;
 } sched_priv;
 
+/*
+ * + Implement weights (hacky at the moment)
+ * - Everyone starts at fixed value
+ * - Burn credit based on variable weight
+ * - Insert in runq based on credit
+ * - Reset 
+ *  - Triggered when someone reaches zero
+ *  + Clip everyone's credit and add INIT
+ * - Timeslice
+ *  - Start with basic timeslice
+ *  - Don't run for more credit than you have
+ *  - Only run until your credit would equal next VM in runqueue
+ *  - Never less than MIN_TIMER
+ */
+
 static int t2c(int time, struct sched_vm *svm)
 {
     return time * sched_priv.max_weight / svm->weight;
@@ -65,8 +80,6 @@ static void reset_credit(int time)
         struct sched_vm *svm = sched_priv.vms + i;
         int tmax = CREDIT_CLIP;
 
-        //sched_priv.vms[i].credit = 0;
-        //sched_priv.vms[i].credit /= (CREDIT_INIT/10);
         if ( svm->credit > tmax )
             svm->credit = tmax;
         svm->credit += CREDIT_INIT;
@@ -74,7 +87,7 @@ static void reset_credit(int time)
 
         dump_credit(time, svm);
     }
-    /* No need to resort runq, as everyone's credit is now zero */
+    /* No need to resort runq, as no one's credit is re-ordered */
 }
 
 static void burn_credit(struct sched_vm *svm, int time)
@@ -89,11 +102,18 @@ static void burn_credit(struct sched_vm *svm, int time)
 
 static int calc_timer(struct sched_vm *svm)
 {
-    int time = MAX_TIMER;
+    int time;
 
+    /* Start with basic timeslice */
+    time = MAX_TIMER;
+
+    /* If we have less credit than that, cut it down to our credits */
     if ( time > c2t(svm->credit, svm) )
         time = c2t(svm->credit, svm);
 
+    /* If there are other VMs on the runqueue, calculate
+     * how much time until our credit will equal their credit.
+     * If this is less than our timeslice, cut it down again. */
     if ( !list_empty(&sched_priv.runq) )
     {
         struct sched_vm *sq = list_entry(sched_priv.runq.next, struct sched_vm, runq_elem);
@@ -105,6 +125,7 @@ static int calc_timer(struct sched_vm *svm)
             time = c2t(svm->credit - sq->credit, svm);
     }
 
+    /* No matter what, always run for at least MIN_TIMER */
     if ( time < MIN_TIMER )
         time = MIN_TIMER;
 
@@ -163,6 +184,7 @@ static void sched_credit_vm_init(int vid)
     svm->v = vm_from_vid(vid);
 
     svm->credit = CREDIT_INIT;
+    /* FIXME */
     svm->weight = init_weight[vid];
     if ( sched_priv.max_weight < svm->weight )
         sched_priv.max_weight = svm->weight;
@@ -293,7 +315,7 @@ static struct vm* sched_credit_schedule(int time, int pid)
 struct scheduler sched_credit03 =
 {
     .name="credit03",
-    .desc="c02 + weight",
+    .desc="c02 + implement weight + clip-and-add on reset",
     .ops = {
         .sched_init = sched_credit_init,
         .vm_init    = sched_credit_vm_init,

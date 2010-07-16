@@ -38,7 +38,19 @@ struct {
     int next_check;
 } sched_priv;
 
-
+/*
+ * - Everyone starts at fixed value
+ * - Burn credit at a constant rate
+ * - Insert in runq based on credit
+ * - Reset 
+ *  - Triggered when someone reaches zero
+ *  - Sets everyone to init
+ * - Timeslice
+ *  - Start with basic timeslice
+ *  - Don't run for more credit than you have
+ *  + Only run until your credit would equal next VM in runqueue
+ *  - Never less than MIN_TIMER
+ */
 
 static void reset_credit(int time)
 {
@@ -68,11 +80,18 @@ static void burn_credit(struct sched_vm *svm, int time)
 
 static int calc_timer(struct sched_vm *svm)
 {
-    int time = MAX_TIMER;
+    int time;
 
+    /* Start with basic timeslice */
+    time = MAX_TIMER;
+
+    /* If we have less credit than that, cut it down to our credits */
     if ( time > svm->credit )
         time = svm->credit;
 
+    /* If there are other VMs on the runqueue, calculate
+     * how much time until our credit will equal their credit.
+     * If this is less than our timeslice, cut it down again. */
     if ( !list_empty(&sched_priv.runq) )
     {
         struct sched_vm *sq = list_entry(sched_priv.runq.next, struct sched_vm, runq_elem);
@@ -83,9 +102,10 @@ static int calc_timer(struct sched_vm *svm)
             time = (svm->credit - sq->credit);
     }
 
-
+    /* No matter what, always run for at least MIN_TIMER */
     if ( time < MIN_TIMER )
         time = MIN_TIMER;
+
     return time;
 }
 
@@ -265,7 +285,7 @@ static struct vm* sched_credit_schedule(int time, int pid)
 struct scheduler sched_credit02 =
 {
     .name="credit02",
-    .desc="Zero-start, burn based on weight, reset to zero at negative credit, with time-on-credit-equal",
+    .desc="c01 + Preempt when your credit equals the next VM on the runqueue",
     .ops = {
         .sched_init = sched_credit_init,
         .vm_init    = sched_credit_vm_init,

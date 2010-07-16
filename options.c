@@ -34,7 +34,7 @@ const struct argp_option cmd_opts[] =  {
       .arg="workload-name",
       .doc = "Synthetic workload to run.", },
     { .name = "scheduler",
-      .arg="workload-name",
+      .arg="scheduler-name",
       .key = OPT_SCHEDULER,
       .doc = "Chose scheduler to run.", },
     { .name = "pcpus",
@@ -66,7 +66,7 @@ error_t cmd_parser(int key, char *arg, struct argp_state *state)
         int i;
         printf("Schedulers:\n");
         for ( i=0; schedulers[i]; i++)
-            printf(" %s\n", schedulers[i]->name);
+            printf(" %15s: %s\n", schedulers[i]->name, schedulers[i]->desc);
         dont_run=1;
         break;
     }   

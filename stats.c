@@ -87,8 +87,6 @@ static float weighted_percentile(float * A, /* values */
     float X, t1;
     unsigned long long t2;
 
-    int progress;
-
     /* Calculate total weight */
     N_weight=0;
 
@@ -149,15 +147,11 @@ static float weighted_percentile(float * A, /* values */
             }
         } while (I <= J); /* Keep going until our pointers meet or pass */
 
-        progress = 0;
-    
         /* Re-adjust L and R, based on which element we're looking for */
         if(J_weight<K_weight) {
-            progress = 1;
             L=I; L_weight = I_weight;
         }
         if(K_weight<I_weight) {
-            progress = 1;
             R=J; R_weight = J_weight;
         }
     }
@@ -175,8 +169,6 @@ static long long self_weighted_percentile(long long * A,
         K_weight, N_weight;
 
     long long X, t1;
-
-    int progress;
 
     /* Calculate total weight */
     N_weight=0;
@@ -237,15 +229,11 @@ static long long self_weighted_percentile(long long * A,
             }
         } while (I <= J); /* Keep going until our pointers meet or pass */
 
-        progress = 0;
-    
         /* Re-adjust L and R, based on which element we're looking for */
         if(J_weight<K_weight) {
-            progress = 1;
             L=I; L_weight = I_weight;
         }
         if(K_weight<I_weight) {
-            progress = 1;
             R=J; R_weight = J_weight;
         }
     }
